@@ -1,0 +1,69 @@
+import pandas as pd
+
+# Load the dataset
+df = pd.read_csv("owid-covid-data.csv")
+
+# Preview columns and first few rows
+print(df.columns)
+df.head()
+
+df.isnull().sum().sort_values(ascending=False)
+
+countries = ['Kenya', 'United States', 'India']
+df_countries = df[df['location'].isin(countries)]
+
+df_countries['date'] = pd.to_datetime(df_countries['date'])
+
+df_countries[['total_cases', 'total_deaths', 'total_vaccinations']] = (
+    df_countries[['total_cases', 'total_deaths', 'total_vaccinations']].fillna(method='ffill')
+)
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(12,6))
+sns.lineplot(data=df_countries, x='date', y='total_cases', hue='location')
+plt.title('Total COVID-19 Cases Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Cases')
+plt.grid(True)
+plt.show()
+
+plt.figure(figsize=(12,6))
+sns.lineplot(data=df_countries, x='date', y='new_cases', hue='location')
+plt.title('Daily New COVID-19 Cases')
+plt.xlabel('Date')
+plt.ylabel('New Cases')
+plt.grid(True)
+plt.show()
+
+df_countries['death_rate'] = df_countries['total_deaths'] / df_countries['total_cases']
+
+plt.figure(figsize=(12,6))
+sns.lineplot(data=df_countries, x='date', y='death_rate', hue='location')
+plt.title('COVID-19 Death Rate Over Time')
+plt.ylabel('Death Rate')
+plt.grid(True)
+plt.show()
+
+plt.figure(figsize=(12,6))
+sns.lineplot(data=df_countries, x='date', y='total_vaccinations', hue='location')
+plt.title('Total Vaccinations Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Vaccinations')
+plt.grid(True)
+plt.show()
+
+import plotly.express as px
+
+# Get latest data
+latest_df = df[df['date'] == df['date'].max()]
+
+fig = px.choropleth(latest_df,
+                    locations="iso_code",
+                    color="total_cases",
+                    hover_name="location",
+                    color_continuous_scale="Reds",
+                    title="Total COVID-19 Cases by Country")
+fig.show()
+
